@@ -1,6 +1,7 @@
 <template>
   <div id="app">
-    <h1>Object Recognition App</h1>
+    <h1>Object Detection App</h1>
+    
     <div class='container'>
       <ImageProcApp/>
     </div>

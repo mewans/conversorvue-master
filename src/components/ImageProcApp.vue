@@ -1,12 +1,25 @@
+<link href="https://unpkg.com/bootstrap-vue@2.0.0-rc.11/dist/bootstrap-vue.css" rel="stylesheet" />
+<link href="https://unpkg.com/bootstrap@4.1.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 <template>
   <div>
-    <img name="image" id="image" :src="imgSrc" style="margin:auto;width:100%;display:block"/>
+    <canvas ref="boxCanvas" class="canvas-overlay"></canvas>
+    <img style="margin: auto; width: 100%; display: block"
+      name="image"
+      id="image"
+      :src="imgSrc"
+    />
+     <v-card elevation="2">
     <h2>Select an image</h2>
     <input type="file" @change="onFileChange" />
-
-    <!-- <button @click="fetchUsers">Axio Get </button> -->
+    </v-card>
+    <br/> <br/> <br/>
+    <v-card elevation="2" style="height: 200px;">
+    <span style="font-weight: bold;">Detected Objects : </span><br/><br/>
+    {{objectList_string}}
+    </v-card>
   </div>
 </template>
+
 <script>
 export default {
   name: "ImageProcApp",
@@ -14,22 +27,24 @@ export default {
     return {
       imgSrc: "",
       uploaded: "",
+      objectList_string:"",
+      objectList:[],
     };
   },
 
   methods: {
-    fetchUsers() {
-      const baseURI = "https://jsonplaceholder.typicode.com/users";
-      this.$http.get(baseURI).then((result) => {
-        this.users = result.data;
-        console.log(this.users);
-      });
+    drawBoxes(x,y,w,h,label){
+            console.log(parseInt(x) * 100); console.log(10 + (parseInt(y) *100)); console.log(parseInt(w)); console.log(h);
+            let c = this.$refs.boxCanvas;
+            const canvas = c.getContext("2d");
+            canvas.beginPath();
+            canvas.rect(x * 100, 10 + (y *100), w * 100, h* 100);
+            canvas.label = label;
+            canvas.stroke(); 
     },
     onFileChange(e) {
-      //var pic = document.getElementById("image");
-      let imgSrc = URL.createObjectURL(e.target.files[0]);
-      this.imgSrc = imgSrc;
-
+      let imgSrc_ = URL.createObjectURL(e.target.files[0]);
+      this.imgSrc = imgSrc_;
       const formData = new FormData();
       formData.append("file", e.target.files[0]);
       formData.append("id", 7878);
@@ -39,14 +54,20 @@ export default {
           formData
         )
         .then(
-          function (result) {
-            const obj = JSON.parse(JSON.stringify(result.data));
-            console.log(JSON.stringify(obj));
-          },
+           res =>  {
+          const obj = JSON.parse(JSON.stringify(res.data));
+          this.objectList = obj.boxes;
+          this.objectList_string = JSON.stringify(res.data);
+
+       this.objectList = [];
+       obj.boxes.forEach((value,index ) => {
+       console.log(index);
+       this.drawBoxes(value.bbox[0],value.bbox[1],value.bbox[2],value.bbox[3],value.label);
+      });
+        }),
           function (error) {
             console.log(error);
           }
-        );
     },
   },
 };
@@ -79,5 +100,15 @@ export default {
 }
 .button:hover {
   opacity: 0.8;
+}
+.canvas-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  width: 100%;
+  height: 100%
 }
 </style>
